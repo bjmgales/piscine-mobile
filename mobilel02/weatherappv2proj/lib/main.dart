@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:weather_proj/app_bar.dart';
 import 'package:weather_proj/navigation.dart';
+import 'package:geolocator/geolocator.dart';
+import 'geolocation.dart' as geoloc;
+import 'city_finder.dart' as cityfinder;
 
 void main() {
   runApp(const MainApp());
@@ -15,16 +18,23 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   int currentPageIndex = 0;
-  String searchQuery = '';
   String submittedSearch = '';
+
   final PageController pageController = PageController();
-  final TextEditingController searchController = TextEditingController();
+  final SearchController searchController = SearchController();
+  Map<String, List<cityfinder.LocationSuggestion>> cachedSuggestions = {};
+  cityfinder.LocationSuggestion? selectedLocation;
+
+  void saveSuggestions(
+      String query, List<cityfinder.LocationSuggestion> suggestions) {
+    if (suggestions.isEmpty) return;
+    cachedSuggestions.addAll({query: suggestions});
+  }
 
   void onDestinationSelected(int index) {
     setState(() {
       currentPageIndex = index;
       pageController.jumpToPage(currentPageIndex);
-      debugPrint('tdqwoto');
     });
   }
 
@@ -34,16 +44,53 @@ class _MainAppState extends State<MainApp> {
     });
   }
 
-  void onSubmitted(String searchQuery) {
+  void onLocationSubmitted(String newQuery, int? index) {
     setState(() {
-      submittedSearch = searchQuery;
-      searchController.value = TextEditingValue.empty;
+      if (index != null){
+        selectedLocation =
+            cachedSuggestions[searchController.text]![index];
+        searchController.text = '${selectedLocation!.city}, '
+            '${selectedLocation!.region}, '
+            '${selectedLocation!.country}';
+      }
+      if (cachedSuggestions.containsKey(searchController.text)) {
+        selectedLocation =
+            cachedSuggestions[searchController.text]!.first;
+        searchController.text = '${selectedLocation!.city}, '
+            '${selectedLocation!.region}, '
+            '${selectedLocation!.country}';
+      } else {
+        searchController.text = newQuery;
+      }
     });
+    searchController.closeView(null);
   }
 
-  void onPressed() {
+  void onGeoLocPressed() async {
+    try {
+      Position pos = await geoloc.determinePosition();
+      debugPrint('$pos');
+      try {
+        geoloc.City location = await geoloc.getCityFetchApi(pos);
+        setState(() {
+          searchController.text = '${location.city}, ${location.region},'
+              ' ${location.countryCode}';
+        });
+      } catch (error) {
+        setState(() {
+          searchController.text = "Error:$error";
+        });
+      }
+    } catch (error) {
+      setState(() {
+        submittedSearch = error.toString();
+      });
+    }
+  }
+
+  void cleanSearch() {
     setState(() {
-      submittedSearch = 'Geolocation';
+      searchController.text = '';
     });
   }
 
@@ -59,14 +106,16 @@ class _MainAppState extends State<MainApp> {
             screenWidth: screenWidth,
             searchController: searchController,
             submittedSearch: submittedSearch,
-            onSubmitted: onSubmitted,
-            onPressed: onPressed,
+            onSubmitted: onLocationSubmitted,
+            onPressed: onGeoLocPressed,
+            saveSuggestions: saveSuggestions,
+            cachedSuggestions: cachedSuggestions,
           ),
           body: MyPageView(
             pageController: pageController,
             onPageChanged: onPageChanged,
-            submittedSearch: submittedSearch,
-
+            submittedSearch: searchController.text,
+            location:selectedLocation ?? null,
           ),
           bottomNavigationBar: MyNavBar(
               screenHeight: screenHeight,

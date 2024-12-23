@@ -92,7 +92,6 @@ List<String> completeExpression(
       result = '0';
     } else if (result != 'undefined') {
       if (result.contains('e')) {
-        debugPrint('hhhh');
         expression = convertScientificNotation(result);
         if (expression.contains('e')) {
           expression = '';
@@ -179,6 +178,5 @@ String calculateExpression(String expression, BuildContext context) {
     );
     return ('undefined');
   }
-  debugPrint('$result');
   return result.toString();
 }

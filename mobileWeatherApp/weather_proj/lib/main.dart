@@ -24,7 +24,6 @@ class _MainAppState extends State<MainApp> {
     setState(() {
       currentPageIndex = index;
       pageController.jumpToPage(currentPageIndex);
-      debugPrint('tdqwoto');
     });
   }
 

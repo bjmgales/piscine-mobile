@@ -66,7 +66,7 @@ class WeatherFetched {
         'daily: $daily)\n';
   }
 
-  WeatherFetched parseResult(WeatherFetched result) {
+  WeatherFetched addUnits(WeatherFetched result) {
     Map<String, dynamic> units = result.units;
     String temperatureUnit = units['temperature_2m'];
     String speedUnit = units["wind_speed_10m"];
@@ -96,7 +96,6 @@ class WeatherFetched {
     result.hourly['weather_code'] = result.hourly['weather_code'].map((temp) {
       return weatherCodes[temp];
     }).toList();
-    result.hourly['temperature_2m'].
 
     result.daily['temperature_2m_max'] =
         result.daily['temperature_2m_max'].map((temp) {
@@ -128,7 +127,7 @@ Future<WeatherFetched> getWeather(double latitude, double longitude) async {
     try {
       debugPrint('toto');
       result = WeatherFetched.fromJson(weatherData);
-      result.parseResult(result);
+      result.addUnits(result);
     } catch (error) {
       throw Exception('Failed to load Weather Data.\n$error');
     }

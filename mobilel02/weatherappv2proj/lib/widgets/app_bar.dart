@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'city_finder.dart' as cityfinder;
+import '../city_finder.dart' as cityfinder;
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double screenWidth;

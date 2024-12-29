@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:weather_proj/app_bar.dart';
-import 'package:weather_proj/navigation.dart';
+import 'package:weather_proj/models/current_weather.dart';
+import 'package:weather_proj/models/daily_weather.dart';
+import 'package:weather_proj/models/hourly_weather.dart';
+import 'package:weather_proj/services/weather_service.dart';
+import 'package:weather_proj/widgets/app_bar.dart';
+import 'package:weather_proj/widgets/current.dart';
+import 'package:weather_proj/widgets/daily.dart';
+import 'package:weather_proj/widgets/hourly.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:weather_proj/widgets/nav_bar.dart';
 import 'geolocation.dart' as geoloc;
 import 'city_finder.dart' as cityfinder;
 
@@ -22,8 +29,13 @@ class _MainAppState extends State<MainApp> {
 
   final PageController pageController = PageController();
   final SearchController searchController = SearchController();
+  final WeatherService weatherService = WeatherService();
+
   Map<String, List<cityfinder.LocationSuggestion>> cachedSuggestions = {};
   cityfinder.LocationSuggestion? selectedLocation;
+  CurrentWeather? currentWeather;
+  HourlyWeather? hourlyWeather;
+  DailyWeather? dailyWeather;
 
   void saveSuggestions(
       String query, List<cityfinder.LocationSuggestion> suggestions) {
@@ -46,19 +58,21 @@ class _MainAppState extends State<MainApp> {
 
   void onLocationSubmitted(String newQuery, int? index) {
     setState(() {
-      if (index != null){
-        selectedLocation =
-            cachedSuggestions[searchController.text]![index];
+      if (index != null) {
+        selectedLocation = cachedSuggestions[searchController.text]![index];
         searchController.text = '${selectedLocation!.city}, '
             '${selectedLocation!.region}, '
             '${selectedLocation!.country}';
+        _processWeatherFetch(
+            selectedLocation!.latitude, selectedLocation!.longitude);
       }
       if (cachedSuggestions.containsKey(searchController.text)) {
-        selectedLocation =
-            cachedSuggestions[searchController.text]!.first;
+        selectedLocation = cachedSuggestions[searchController.text]!.first;
         searchController.text = '${selectedLocation!.city}, '
             '${selectedLocation!.region}, '
             '${selectedLocation!.country}';
+        _processWeatherFetch(
+            selectedLocation!.latitude, selectedLocation!.longitude);
       } else {
         searchController.text = newQuery;
       }
@@ -94,6 +108,15 @@ class _MainAppState extends State<MainApp> {
     });
   }
 
+  void _processWeatherFetch(double latitude, double longitude) async {
+    final weather = await weatherService.getWeather(latitude, longitude);
+    setState(() {
+      currentWeather = weather.currentWeather;
+      hourlyWeather = weather.hourlyWeather;
+      dailyWeather = weather.dailyWeather;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
@@ -111,13 +134,28 @@ class _MainAppState extends State<MainApp> {
             saveSuggestions: saveSuggestions,
             cachedSuggestions: cachedSuggestions,
           ),
-          body: MyPageView(
-            pageController: pageController,
+          body: PageView(
+            controller: pageController,
             onPageChanged: onPageChanged,
-            submittedSearch: searchController.text,
-            location:selectedLocation ?? null,
+            children: [
+              currentWeather == null
+                  ? Text("Enter a city")
+                  : Current(
+                      currentWeather: currentWeather!,
+                    ),
+              hourlyWeather == null
+                  ? Text("Enter a city")
+                  : Hourly(
+                      hourlyWeather: hourlyWeather!,
+                    ),
+              dailyWeather == null
+                  ? Text("Enter a city")
+                  : Daily(
+                      dailyWeather: dailyWeather!,
+                    ),
+            ],
           ),
-          bottomNavigationBar: MyNavBar(
+          bottomNavigationBar: NavBar(
               screenHeight: screenHeight,
               changePage: onDestinationSelected,
               currentPageIndex: currentPageIndex,

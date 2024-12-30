@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:weather_proj/models/current_weather.dart';
-import 'package:weather_proj/models/daily_weather.dart';
-import 'package:weather_proj/models/hourly_weather.dart';
+import 'package:marquee/marquee.dart';
+import 'package:weather_proj/models/weather/current_weather.dart';
+import 'package:weather_proj/models/weather/daily/daily_weather.dart';
+import 'package:weather_proj/models/weather/hourly/hourly_weather.dart';
+import 'package:weather_proj/models/searchbar/suggestion.dart';
+import 'package:weather_proj/models/searchbar/suggestion_list.dart';
 import 'package:weather_proj/services/weather_service.dart';
 import 'package:weather_proj/widgets/app_bar.dart';
 import 'package:weather_proj/widgets/current.dart';
@@ -10,7 +13,6 @@ import 'package:weather_proj/widgets/hourly.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:weather_proj/widgets/nav_bar.dart';
 import 'geolocation.dart' as geoloc;
-import 'city_finder.dart' as cityfinder;
 
 void main() {
   runApp(const MainApp());
@@ -31,15 +33,14 @@ class _MainAppState extends State<MainApp> {
   final SearchController searchController = SearchController();
   final WeatherService weatherService = WeatherService();
 
-  Map<String, List<cityfinder.LocationSuggestion>> cachedSuggestions = {};
-  cityfinder.LocationSuggestion? selectedLocation;
+  Map<String, SuggestionList> cachedSuggestions = {};
+  Suggestion? selectedLocation;
+
   CurrentWeather? currentWeather;
   HourlyWeather? hourlyWeather;
   DailyWeather? dailyWeather;
 
-  void saveSuggestions(
-      String query, List<cityfinder.LocationSuggestion> suggestions) {
-    if (suggestions.isEmpty) return;
+  void saveSuggestions(String query, SuggestionList suggestions) {
     cachedSuggestions.addAll({query: suggestions});
   }
 
@@ -59,20 +60,22 @@ class _MainAppState extends State<MainApp> {
   void onLocationSubmitted(String newQuery, int? index) {
     setState(() {
       if (index != null) {
-        selectedLocation = cachedSuggestions[searchController.text]![index];
+        selectedLocation =
+            cachedSuggestions[searchController.text]!.suggestion[index];
         searchController.text = '${selectedLocation!.city}, '
             '${selectedLocation!.region}, '
             '${selectedLocation!.country}';
-        _processWeatherFetch(
-            selectedLocation!.latitude, selectedLocation!.longitude);
+        _processWeatherFetch(selectedLocation!.coordinates.latitude,
+            selectedLocation!.coordinates.longitude);
       }
       if (cachedSuggestions.containsKey(searchController.text)) {
-        selectedLocation = cachedSuggestions[searchController.text]!.first;
+        selectedLocation =
+            cachedSuggestions[searchController.text]!.suggestion[0];
         searchController.text = '${selectedLocation!.city}, '
             '${selectedLocation!.region}, '
             '${selectedLocation!.country}';
-        _processWeatherFetch(
-            selectedLocation!.latitude, selectedLocation!.longitude);
+        _processWeatherFetch(selectedLocation!.coordinates.latitude,
+            selectedLocation!.coordinates.longitude);
       } else {
         searchController.text = newQuery;
       }
@@ -122,6 +125,26 @@ class _MainAppState extends State<MainApp> {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
     Orientation orientation = MediaQuery.of(context).orientation;
+    var citySlider = Align(
+        alignment: Alignment.topCenter,
+        child: Container(
+          color: Colors.grey,
+          child: Row(children: [
+            SizedBox(
+              height: 50,
+              width: screenWidth,
+              child: Marquee(
+                text: searchController.text.isEmpty
+                    ? "Please provide location..."
+                    : searchController.text,
+                style: TextStyle(fontSize: 25, color: Colors.white),
+                velocity: 50.0,
+                blankSpace: 30,
+                startPadding: 10.0,
+              ),
+            ),
+          ]),
+        ));
 
     return MaterialApp(
       home: Scaffold(
@@ -134,25 +157,30 @@ class _MainAppState extends State<MainApp> {
             saveSuggestions: saveSuggestions,
             cachedSuggestions: cachedSuggestions,
           ),
-          body: PageView(
-            controller: pageController,
-            onPageChanged: onPageChanged,
+          body: Stack(
             children: [
-              currentWeather == null
-                  ? Text("Enter a city")
-                  : Current(
-                      currentWeather: currentWeather!,
-                    ),
-              hourlyWeather == null
-                  ? Text("Enter a city")
-                  : Hourly(
-                      hourlyWeather: hourlyWeather!,
-                    ),
-              dailyWeather == null
-                  ? Text("Enter a city")
-                  : Daily(
-                      dailyWeather: dailyWeather!,
-                    ),
+              citySlider,
+              PageView(
+                controller: pageController,
+                onPageChanged: onPageChanged,
+                children: [
+                  currentWeather == null
+                      ? Center(child: Text("Please provide location."))
+                      : Current(
+                          currentWeather: currentWeather!,
+                        ),
+                  hourlyWeather == null
+                      ? Center(child: Text("Please provide location."))
+                      : Hourly(
+                          hourlyWeather: hourlyWeather!,
+                        ),
+                  dailyWeather == null
+                      ? Center(child: Text("Please provide location."))
+                      : Daily(
+                          dailyWeather: dailyWeather!,
+                        ),
+                ],
+              ),
             ],
           ),
           bottomNavigationBar: NavBar(

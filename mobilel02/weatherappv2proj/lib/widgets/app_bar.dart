@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../city_finder.dart' as cityfinder;
+import 'package:weather_proj/models/searchbar/suggestion_list.dart';
+import '../services/cityfinder_service.dart';
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double screenWidth;
@@ -8,9 +8,8 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String submittedSearch;
   final void Function(String value, int? index) onSubmitted;
   final void Function() onPressed;
-  final Map<String, List<cityfinder.LocationSuggestion>> cachedSuggestions;
-  final void Function(String query, List<cityfinder.LocationSuggestion>)
-      saveSuggestions;
+  final Map<String, SuggestionList> cachedSuggestions;
+  final void Function(String query, SuggestionList) saveSuggestions;
   const MyAppBar(
       {super.key,
       required this.screenWidth,
@@ -33,10 +32,9 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
                 width: screenWidth * 0.4,
                 height: kToolbarHeight * 0.5,
                 child: SearchAnchor(
-                    // key: ValueKey(suggestions),
                     searchController: searchController,
                     isFullScreen: false,
-                    viewOnSubmitted: (String value)=>onSubmitted(value, null),
+                    viewOnSubmitted: (String value) => onSubmitted(value, null),
                     viewLeading: const Icon(Icons.search),
                     builder: (context, controller) {
                       return SearchBar(
@@ -50,24 +48,24 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
                         leading: const Icon(Icons.search),
                       );
                     },
-                    suggestionsBuilder: (context, controller) {
-                      Future<List<cityfinder.LocationSuggestion>> searchFuture;
+                    suggestionsBuilder: (context, controller) async {
+                      Future<SuggestionList> searchFuture = Future.value(SuggestionList(suggestion: []));
                       if (cachedSuggestions
                           .containsKey(searchController.text)) {
-                        searchFuture = Future.value(
-                            cachedSuggestions[searchController.text]);
-                      } else {
-                        searchFuture =
-                            cityfinder.suggestLocation(controller.text);
-                        searchFuture.then((suggestions) {
+                        searchFuture = Future.value(cachedSuggestions[searchController.text]!);
+                      }
+                      else {
+                        try {
+                          searchFuture = suggestLocation(controller.text);
+                          final suggestions = await searchFuture;
                           saveSuggestions(searchController.text, suggestions);
-                        }).onError((err, stackTrace) {
+                        } catch (err) {
                           debugPrint('$err');
-                        });
+                        }
                       }
 
                       return [
-                        FutureBuilder<List<cityfinder.LocationSuggestion>>(
+                        FutureBuilder<SuggestionList>(
                           future: searchFuture,
                           builder: (context, snapshot) {
                             if (snapshot.connectionState ==
@@ -77,23 +75,26 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
                             } else if (snapshot.hasError) {
                               return Center(child: Text('No suggestions.'));
                             } else if (!snapshot.hasData ||
-                                snapshot.data!.isEmpty) {
+                                snapshot.data!.suggestion.isEmpty) {
                               return const Center(
                                   child: Text('No suggestions found'));
                             } else {
                               return Column(
                                 children: List<Widget>.generate(
-                                    snapshot.data!.length, (index) {
+                                    snapshot.data!.suggestion.length,
+                                    (index) {
                                   return ListTile(
-                                    title: Text(snapshot.data![index].city),
-                                    subtitle:
-                                        Text(snapshot.data![index].region),
-                                    trailing:
-                                        Text(snapshot.data![index].country),
+                                    title: Text(snapshot
+                                        .data!.suggestion[index].city),
+                                    subtitle: Text(snapshot
+                                        .data!.suggestion[index].region),
+                                    trailing: Text(snapshot
+                                        .data!.suggestion[index].country),
                                     onTap: () {
                                       onSubmitted(
-                                          '${snapshot.data![index].city}, ${snapshot.data![index].region},'
-                                          ' ${snapshot.data![index].country}', index);
+                                          '${snapshot.data!.suggestion[index].city}, ${snapshot.data!.suggestion[index].region},'
+                                          ' ${snapshot.data!.suggestion[index].country}',
+                                          index);
                                     },
                                   );
                                 }),

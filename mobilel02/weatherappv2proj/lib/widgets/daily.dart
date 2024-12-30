@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:weather_proj/models/daily_weather.dart';
+import 'package:weather_proj/models/weather/daily/daily_weather.dart';
 import 'package:weather_proj/widgets/temperature_widget.dart';
 
 class Daily extends StatelessWidget {
@@ -10,13 +10,19 @@ class Daily extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         for (var day in dailyWeather.dayWeathers)
-          Row(children: [
-            Text(day.date),
-            TemperatureWidget(temperature: day.minTemperature),
-            TemperatureWidget(temperature: day.maxTemperature),
-          ]),
+          Wrap(
+
+              spacing: 20,
+              alignment: WrapAlignment.center,
+              children: [
+                Text(day.date, textAlign: TextAlign.center,),
+                TemperatureWidget(temperature: day.minTemperature),
+                TemperatureWidget(temperature: day.maxTemperature),
+                Text(day.condition, textAlign: TextAlign.center,)
+              ]),
       ],
     );
   }

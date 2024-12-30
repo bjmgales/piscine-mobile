@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:weather_proj/models/wind_speed.dart';
+import 'package:weather_proj/models/weather/metrics/wind_speed.dart';
 
 class WindSpeedWidget extends StatelessWidget {
   final WindSpeed windSpeed;
@@ -7,7 +7,7 @@ class WindSpeedWidget extends StatelessWidget {
   const WindSpeedWidget({super.key, required this.windSpeed});
 
   String _formatWindSpeed() {
-    return "Wind Speed : ${windSpeed.value}${windSpeed.unit}";
+    return "${windSpeed.value}${windSpeed.unit}";
   }
 
   @override

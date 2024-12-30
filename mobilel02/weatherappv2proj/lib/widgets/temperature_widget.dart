@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:weather_proj/models/temperature.dart';
+import 'package:weather_proj/models/weather/metrics/temperature.dart';
 
 class TemperatureWidget extends StatelessWidget {
   final Temperature temperature;
@@ -7,7 +7,7 @@ class TemperatureWidget extends StatelessWidget {
   const TemperatureWidget({super.key, required this.temperature});
 
   String _formatTemperature() {
-    return "Temperature : ${temperature.value}${temperature.unit}";
+    return "${temperature.value}${temperature.unit}";
   }
 
   @override

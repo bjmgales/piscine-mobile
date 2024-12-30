@@ -1,6 +1,6 @@
-import 'package:weather_proj/models/current_weather.dart';
-import 'package:weather_proj/models/daily_weather.dart';
-import 'package:weather_proj/models/hourly_weather.dart';
+import 'package:weather_proj/models/weather/current_weather.dart';
+import 'package:weather_proj/models/weather/daily/daily_weather.dart';
+import 'package:weather_proj/models/weather/hourly/hourly_weather.dart';
 
 class Weather {
   final CurrentWeather currentWeather;

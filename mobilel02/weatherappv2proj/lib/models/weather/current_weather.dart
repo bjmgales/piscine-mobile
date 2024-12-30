@@ -1,6 +1,6 @@
 import 'package:weather_proj/mappers/condition_mapper.dart';
-import 'package:weather_proj/models/temperature.dart';
-import 'package:weather_proj/models/wind_speed.dart';
+import 'package:weather_proj/models/weather/metrics/temperature.dart';
+import 'package:weather_proj/models/weather/metrics/wind_speed.dart';
 
 class CurrentWeather {
   final Temperature temperature;

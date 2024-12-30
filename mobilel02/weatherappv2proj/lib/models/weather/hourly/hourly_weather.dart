@@ -1,18 +1,32 @@
-import 'package:weather_proj/models/hour_weather.dart';
-import 'package:weather_proj/models/temperature.dart';
-import 'package:weather_proj/models/wind_speed.dart';
+import 'package:weather_proj/models/weather/hourly/hour_weather.dart';
+import 'package:weather_proj/models/weather/metrics/temperature.dart';
+import 'package:weather_proj/models/weather/metrics/wind_speed.dart';
 
 class HourlyWeather {
   final List<HourWeather> hourWeathers;
 
   HourlyWeather({required this.hourWeathers});
 
+  static List<String> _extractTime(List<String> dates) {
+    final DateTime now = DateTime.now();
+    final List<String> time = [];
+
+    for (var i = 0; i < dates.length; i++) {
+      if (DateTime.parse(dates[i]).isBefore(now) &&
+          DateTime.parse(dates[i]).isBefore(
+            now.add(Duration(hours: 24)))) {
+        time.add(dates[i].substring(dates[i].indexOf('T') + 1));
+      }
+    }
+    return time;
+  }
+
   factory HourlyWeather.fromJson(
       Map<String, dynamic> hourlyJson, Map<String, dynamic> hourlyUnitsJson) {
     final temperatureUnit = hourlyUnitsJson["temperature_2m"];
     final windSpeedUnit = hourlyUnitsJson["wind_speed_10m"];
 
-    final timeList = hourlyJson["time"];
+    final timeList = _extractTime(List<String>.from(hourlyJson["time"]));
     final temperatureList = hourlyJson["temperature_2m"];
     final windSpeedList = hourlyJson["wind_speed_10m"];
 

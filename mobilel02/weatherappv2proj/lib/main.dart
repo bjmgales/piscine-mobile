@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:marquee/marquee.dart';
+import 'package:weather_proj/models/geolocation/City.dart';
 import 'package:weather_proj/models/weather/current_weather.dart';
 import 'package:weather_proj/models/weather/daily/daily_weather.dart';
 import 'package:weather_proj/models/weather/hourly/hourly_weather.dart';
 import 'package:weather_proj/models/searchbar/suggestion.dart';
 import 'package:weather_proj/models/searchbar/suggestion_list.dart';
+import 'package:weather_proj/permissions/geolocation_permission.dart';
+import 'package:weather_proj/services/geolocation_service.dart';
 import 'package:weather_proj/services/weather_service.dart';
 import 'package:weather_proj/widgets/app_bar.dart';
 import 'package:weather_proj/widgets/current.dart';
@@ -12,7 +15,6 @@ import 'package:weather_proj/widgets/daily.dart';
 import 'package:weather_proj/widgets/hourly.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:weather_proj/widgets/nav_bar.dart';
-import 'geolocation.dart' as geoloc;
 
 void main() {
   runApp(const MainApp());
@@ -85,13 +87,14 @@ class _MainAppState extends State<MainApp> {
 
   void onGeoLocPressed() async {
     try {
-      Position pos = await geoloc.determinePosition();
+      Position pos = await determinePosition();
       debugPrint('$pos');
       try {
-        geoloc.City location = await geoloc.getCityFetchApi(pos);
+        City location = await reverseGeocoder(pos);
         setState(() {
           searchController.text = '${location.city}, ${location.region},'
               ' ${location.countryCode}';
+          _processWeatherFetch(location.latitude, location.longitude);
         });
       } catch (error) {
         setState(() {

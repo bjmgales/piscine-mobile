@@ -1,5 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:weather_proj/models/searchbar/coordinates.dart';
+import 'package:weather_proj/models/searchbar/suggestion.dart';
 import 'package:weather_proj/models/searchbar/suggestion_list.dart';
+import 'package:http/http.dart' as http;
 import '../services/cityfinder_service.dart';
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -10,6 +15,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   final void Function() onPressed;
   final Map<String, SuggestionList> cachedSuggestions;
   final void Function(String query, SuggestionList) saveSuggestions;
+  final void Function() setConnectionLost;
   const MyAppBar(
       {super.key,
       required this.screenWidth,
@@ -18,12 +24,11 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
       required this.onSubmitted,
       required this.onPressed,
       required this.saveSuggestions,
-      required this.cachedSuggestions});
+      required this.cachedSuggestions,
+      required this.setConnectionLost});
 
   @override
   Widget build(BuildContext context) {
-    debugPrint(
-        'APPBAR WIDGET IS BUILDING searchQuery = ${searchController.text}');
     return AppBar(
         backgroundColor: const Color.fromARGB(255, 0, 140, 255),
         title: Stack(alignment: Alignment.center, children: [
@@ -49,17 +54,22 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
                       );
                     },
                     suggestionsBuilder: (context, controller) async {
-                      Future<SuggestionList> searchFuture = Future.value(SuggestionList(suggestion: []));
+                      Future<SuggestionList> searchFuture =
+                          Future.value(SuggestionList(suggestion: []));
                       if (cachedSuggestions
                           .containsKey(searchController.text)) {
-                        searchFuture = Future.value(cachedSuggestions[searchController.text]!);
-                      }
-                      else {
+                        searchFuture = Future.value(
+                            cachedSuggestions[searchController.text]!);
+                      } else {
                         try {
                           searchFuture = suggestLocation(controller.text);
                           final suggestions = await searchFuture;
                           saveSuggestions(searchController.text, suggestions);
                         } catch (err) {
+                          if (err is http.ClientException ||
+                              err is TimeoutException) {
+                            setConnectionLost();
+                          }
                           debugPrint('$err');
                         }
                       }
@@ -81,11 +91,10 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
                             } else {
                               return Column(
                                 children: List<Widget>.generate(
-                                    snapshot.data!.suggestion.length,
-                                    (index) {
+                                    snapshot.data!.suggestion.length, (index) {
                                   return ListTile(
-                                    title: Text(snapshot
-                                        .data!.suggestion[index].city),
+                                    title: Text(
+                                        snapshot.data!.suggestion[index].city),
                                     subtitle: Text(snapshot
                                         .data!.suggestion[index].region),
                                     trailing: Text(snapshot

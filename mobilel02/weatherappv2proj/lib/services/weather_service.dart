@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:weather_proj/models/weather/weather.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -17,3 +18,4 @@ class WeatherService {
     throw Exception('Failed to load Weather Data.');
   }
 }
+ 

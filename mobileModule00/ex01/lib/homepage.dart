@@ -12,7 +12,6 @@ class _HomePageState extends State<HomePage>{
   String displayText = 'A simple text';
   void updateText(){
     setState((){
-      debugPrint('Button Pressed');
       displayText = displayText == "A simple text" ? "Hello World!" : "A simple text";
     });
   }

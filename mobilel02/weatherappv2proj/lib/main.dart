@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:marquee/marquee.dart';
 import 'package:weather_proj/models/geolocation/City.dart';
 import 'package:weather_proj/models/weather/current_weather.dart';
@@ -15,6 +18,7 @@ import 'package:weather_proj/widgets/daily.dart';
 import 'package:weather_proj/widgets/hourly.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:weather_proj/widgets/nav_bar.dart';
+import 'package:weather_proj/widgets/search_error_widget.dart';
 
 void main() {
   runApp(const MainApp());
@@ -30,6 +34,11 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   int currentPageIndex = 0;
   String submittedSearch = '';
+  String searchFieldUpdate = '';
+
+  bool isGeoloc = false;
+  bool isSubmit = false;
+  bool isConnectionLost = false;
 
   final PageController pageController = PageController();
   final SearchController searchController = SearchController();
@@ -61,25 +70,29 @@ class _MainAppState extends State<MainApp> {
 
   void onLocationSubmitted(String newQuery, int? index) {
     setState(() {
+      isSubmit = true;
       if (index != null) {
         selectedLocation =
             cachedSuggestions[searchController.text]!.suggestion[index];
-        searchController.text = '${selectedLocation!.city}, '
+        searchFieldUpdate = '${selectedLocation!.city}, '
             '${selectedLocation!.region}, '
             '${selectedLocation!.country}';
         _processWeatherFetch(selectedLocation!.coordinates.latitude,
             selectedLocation!.coordinates.longitude);
-      }
-      if (cachedSuggestions.containsKey(searchController.text)) {
+      } else if (cachedSuggestions.containsKey(searchController.text)) {
         selectedLocation =
             cachedSuggestions[searchController.text]!.suggestion[0];
-        searchController.text = '${selectedLocation!.city}, '
+
+        searchFieldUpdate = '${selectedLocation!.city}, '
             '${selectedLocation!.region}, '
             '${selectedLocation!.country}';
         _processWeatherFetch(selectedLocation!.coordinates.latitude,
             selectedLocation!.coordinates.longitude);
       } else {
-        searchController.text = newQuery;
+        debugPrint('hedw');
+        currentWeather = null;
+        hourlyWeather = null;
+        dailyWeather = null;
       }
     });
     searchController.closeView(null);
@@ -87,23 +100,28 @@ class _MainAppState extends State<MainApp> {
 
   void onGeoLocPressed() async {
     try {
+      isGeoloc = true;
       Position pos = await determinePosition();
-      debugPrint('$pos');
       try {
         City location = await reverseGeocoder(pos);
         setState(() {
-          searchController.text = '${location.city}, ${location.region},'
+          searchFieldUpdate = '${location.city}, ${location.region},'
               ' ${location.countryCode}';
           _processWeatherFetch(location.latitude, location.longitude);
         });
       } catch (error) {
-        setState(() {
-          searchController.text = "Error:$error";
-        });
+        if (error is http.ClientException || error is TimeoutException) {
+          debugPrint('here');
+          setConnectionLost();
+        }
       }
     } catch (error) {
       setState(() {
-        submittedSearch = error.toString();
+        searchFieldUpdate =
+            "Please allow geolocation or enter a location manually";
+        currentWeather = null;
+        hourlyWeather = null;
+        dailyWeather = null;
       });
     }
   }
@@ -115,11 +133,25 @@ class _MainAppState extends State<MainApp> {
   }
 
   void _processWeatherFetch(double latitude, double longitude) async {
-    final weather = await weatherService.getWeather(latitude, longitude);
+    try {
+      final weather = await weatherService.getWeather(latitude, longitude);
+      setState(() {
+        currentWeather = weather.currentWeather;
+        hourlyWeather = weather.hourlyWeather;
+        dailyWeather = weather.dailyWeather;
+        isConnectionLost = false;
+      });
+    } catch (err) {
+      setConnectionLost();
+      currentWeather = null;
+      hourlyWeather = null;
+      dailyWeather = null;
+    }
+  }
+
+  void setConnectionLost() {
     setState(() {
-      currentWeather = weather.currentWeather;
-      hourlyWeather = weather.hourlyWeather;
-      dailyWeather = weather.dailyWeather;
+      isConnectionLost = true;
     });
   }
 
@@ -128,6 +160,10 @@ class _MainAppState extends State<MainApp> {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
     Orientation orientation = MediaQuery.of(context).orientation;
+    final textDisplay = SearchError().evaluateContext(currentWeather,
+        searchController.text, isSubmit, isGeoloc, isConnectionLost);
+    isSubmit = false;
+    isGeoloc = false;
     var citySlider = Align(
         alignment: Alignment.topCenter,
         child: Container(
@@ -137,10 +173,9 @@ class _MainAppState extends State<MainApp> {
               height: 50,
               width: screenWidth,
               child: Marquee(
-                text: searchController.text.isEmpty
-                    ? "Please provide location..."
-                    : searchController.text,
-                style: TextStyle(fontSize: 25, color: Colors.white),
+                text: textDisplay.text ?? searchFieldUpdate,
+                style: TextStyle(
+                    fontSize: 25, color: textDisplay.color ?? Colors.white),
                 velocity: 50.0,
                 blankSpace: 30,
                 startPadding: 10.0,
@@ -159,6 +194,7 @@ class _MainAppState extends State<MainApp> {
             onPressed: onGeoLocPressed,
             saveSuggestions: saveSuggestions,
             cachedSuggestions: cachedSuggestions,
+            setConnectionLost: setConnectionLost,
           ),
           body: Stack(
             children: [
@@ -167,21 +203,39 @@ class _MainAppState extends State<MainApp> {
                 controller: pageController,
                 onPageChanged: onPageChanged,
                 children: [
-                  currentWeather == null
-                      ? Center(child: Text("Please provide location."))
-                      : Current(
-                          currentWeather: currentWeather!,
-                        ),
-                  hourlyWeather == null
-                      ? Center(child: Text("Please provide location."))
-                      : Hourly(
-                          hourlyWeather: hourlyWeather!,
-                        ),
-                  dailyWeather == null
-                      ? Center(child: Text("Please provide location."))
-                      : Daily(
-                          dailyWeather: dailyWeather!,
-                        ),
+                  if (textDisplay.text != null || currentWeather == null)
+                    Center(
+                        child: Text(
+                      textDisplay.text!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: textDisplay.color),
+                    ))
+                  else
+                    Current(
+                      currentWeather: currentWeather!,
+                    ),
+                  if (textDisplay.text != null || hourlyWeather == null)
+                    Center(
+                        child: Text(
+                      textDisplay.text!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: textDisplay.color),
+                    ))
+                  else
+                    Hourly(
+                      hourlyWeather: hourlyWeather!,
+                    ),
+                  if (textDisplay.text != null || dailyWeather == null)
+                    Center(
+                        child: Text(
+                      textAlign: TextAlign.center,
+                      textDisplay.text!,
+                      style: TextStyle(color: textDisplay.color),
+                    ))
+                  else
+                    Daily(
+                      dailyWeather: dailyWeather!,
+                    ),
                 ],
               ),
             ],

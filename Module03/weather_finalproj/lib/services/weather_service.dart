@@ -1,6 +1,7 @@
-import 'package:weather_proj/models/weather/weather.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import '../models/weather/weather.dart';
 
 class WeatherService {
   Future<Weather> getWeather(double latitude, double longitude) async {

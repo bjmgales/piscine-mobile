@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:weather_proj/models/searchbar/suggestion_list.dart';
 import 'package:http/http.dart' as http;
+import '../models/searchbar/suggestion_list.dart';
 import '../services/cityfinder_service.dart';
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {

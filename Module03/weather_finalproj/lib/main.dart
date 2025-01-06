@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:marquee/marquee.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:weather_proj/widgets/location.dart';
 
 import 'models/geolocation/city.dart';
 import 'models/searchbar/suggestion.dart';
@@ -40,6 +41,7 @@ class _MainAppState extends State<MainApp> {
   bool isGeoloc = false;
   bool isSubmit = false;
   bool isConnectionLost = false;
+  bool isViewOpen = false;
 
   final PageController pageController = PageController();
   final SearchController searchController = SearchController();
@@ -97,6 +99,7 @@ class _MainAppState extends State<MainApp> {
       }
     });
     searchController.closeView(null);
+    isViewOpen = false;
   }
 
   void onGeoLocPressed() async {
@@ -156,6 +159,12 @@ class _MainAppState extends State<MainApp> {
     });
   }
 
+  void setViewOpen() {
+    setState(() {
+      isViewOpen = !isViewOpen;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
@@ -165,88 +174,130 @@ class _MainAppState extends State<MainApp> {
         searchController.text, isSubmit, isGeoloc, isConnectionLost);
     isSubmit = false;
     isGeoloc = false;
-    var citySlider = Align(
-        alignment: Alignment.topCenter,
-        child: Container(
-          color: Colors.grey,
-          child: Row(children: [
-            SizedBox(
-              height: 50,
-              width: screenWidth,
-              child: Marquee(
-                text: textDisplay.text ?? searchFieldUpdate,
-                style: TextStyle(
-                    fontSize: 25, color: textDisplay.color ?? Colors.white),
-                velocity: 50.0,
-                blankSpace: 30,
-                startPadding: 10.0,
-              ),
-            ),
-          ]),
-        ));
 
     return MaterialApp(
-      home: Scaffold(
-          appBar: MyAppBar(
-            screenWidth: screenWidth,
-            searchController: searchController,
-            submittedSearch: submittedSearch,
-            onSubmitted: onLocationSubmitted,
-            onPressed: onGeoLocPressed,
-            saveSuggestions: saveSuggestions,
-            cachedSuggestions: cachedSuggestions,
-            setConnectionLost: setConnectionLost,
-          ),
-          body: Stack(
-            children: [
-              citySlider,
-              PageView(
-                controller: pageController,
-                onPageChanged: onPageChanged,
-                children: [
-                  if (textDisplay.text != null || currentWeather == null)
-                    Center(
-                        child: Text(
-                      textDisplay.text!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: textDisplay.color),
-                    ))
-                  else
-                    Current(
-                      currentWeather: currentWeather!,
-                    ),
-                  if (textDisplay.text != null || hourlyWeather == null)
-                    Center(
-                        child: Text(
-                      textDisplay.text!,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: textDisplay.color),
-                    ))
-                  else
-                    Hourly(
-                      hourlyWeather: hourlyWeather!,
-                    ),
-                  if (textDisplay.text != null || dailyWeather == null)
-                    Center(
-                        child: Text(
-                      textAlign: TextAlign.center,
-                      textDisplay.text!,
-                      style: TextStyle(color: textDisplay.color),
-                    ))
-                  else
-                    Daily(
-                      dailyWeather: dailyWeather!,
-                    ),
-                ],
-              ),
-            ],
-          ),
-          bottomNavigationBar: NavBar(
-              screenHeight: screenHeight,
-              changePage: onDestinationSelected,
-              currentPageIndex: currentPageIndex,
+      theme: ThemeData(
+          scaffoldBackgroundColor: Colors.transparent,
+          textSelectionTheme:
+              TextSelectionThemeData(cursorColor: Colors.white)),
+      home: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+              image: AssetImage('assets/background.jpg'),
+              fit: BoxFit.cover,
+              opacity: 0.6),
+        ),
+        child: Scaffold(
+            appBar: MyAppBar(
+              isViewOpen: isViewOpen,
+              screenWidth: screenWidth,
+              searchController: searchController,
               submittedSearch: submittedSearch,
-              orientation: orientation)),
+              onSubmitted: onLocationSubmitted,
+              onPressed: onGeoLocPressed,
+              saveSuggestions: saveSuggestions,
+              cachedSuggestions: cachedSuggestions,
+              setConnectionLost: setConnectionLost,
+            ),
+            body: Stack(
+              children: [
+                PageView(
+                  controller: pageController,
+                  onPageChanged: onPageChanged,
+                  children: [
+                    if (textDisplay.text != null || currentWeather == null)
+                      Center(
+                          child: Text(
+                        textDisplay.text!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: textDisplay.color),
+                      ))
+                    else
+                      SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: orientation == Orientation.portrait
+                              ? MainAxisAlignment.start
+                              : MainAxisAlignment.center,
+                          spacing: orientation == Orientation.portrait
+                              ? screenHeight / 10
+                              : 10,
+                          children: [
+                            if (selectedLocation != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 30),
+                                child: Center(
+                                  child: Location(
+                                    location: selectedLocation!,
+                                  ),
+                                ),
+                              ),
+                            Current(
+                              currentWeather: currentWeather!,
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (textDisplay.text != null || hourlyWeather == null)
+                      Center(
+                          child: Text(
+                        textDisplay.text!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: textDisplay.color),
+                      ))
+                    else
+                      SingleChildScrollView(
+                          child: Column(
+                              mainAxisAlignment:
+                                  orientation == Orientation.portrait
+                                      ? MainAxisAlignment.start
+                                      : MainAxisAlignment.center,
+                              spacing: 10,
+                              children: [
+                            if (selectedLocation != null)
+                              Center(
+                                child: Location(
+                                  location: selectedLocation!,
+                                ),
+                              ),
+                            Hourly(
+                              hourlyWeather: hourlyWeather!,
+                            ),
+                          ])),
+                    if (textDisplay.text != null || dailyWeather == null)
+                      Center(
+                          child: Text(
+                        textAlign: TextAlign.center,
+                        textDisplay.text!,
+                        style: TextStyle(color: textDisplay.color),
+                      ))
+                    else
+                    SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: orientation == Orientation.portrait
+                              ? MainAxisAlignment.start
+                              : MainAxisAlignment.center,
+                          spacing: 10,
+                          children: [
+                            if (selectedLocation != null)
+                              Center(
+                                child: Location(
+                                  location: selectedLocation!,
+                                ),
+                              ),
+                      Daily(
+                        dailyWeather: dailyWeather!,
+                      )])),
+                  ],
+                ),
+              ],
+            ),
+            bottomNavigationBar: NavBar(
+                screenHeight: screenHeight,
+                changePage: onDestinationSelected,
+                currentPageIndex: currentPageIndex,
+                submittedSearch: submittedSearch,
+                orientation: orientation)),
+      ),
     );
   }
 }

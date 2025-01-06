@@ -4,8 +4,9 @@ import '../models/weather/metrics/wind_speed.dart';
 
 class WindSpeedWidget extends StatelessWidget {
   final WindSpeed windSpeed;
+  double? fontSize;
 
-  const WindSpeedWidget({super.key, required this.windSpeed});
+  WindSpeedWidget({super.key, required this.windSpeed, this.fontSize});
 
   String _formatWindSpeed() {
     return "${windSpeed.value}${windSpeed.unit}";
@@ -13,6 +14,19 @@ class WindSpeedWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(_formatWindSpeed());
+    return Text(
+      _formatWindSpeed(),
+      style: TextStyle(
+        color: Colors.lightBlueAccent,
+        fontSize: fontSize,
+        shadows: [
+          Shadow(
+        offset: Offset(2.0, 2.0),
+        blurRadius: 10.0,
+        color: Colors.black.withAlpha(200),
+          ),
+        ],
+      ),
+    );
   }
 }

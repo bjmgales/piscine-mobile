@@ -3,4 +3,6 @@ class Temperature {
   final String unit;
 
   Temperature({required this.value, required this.unit});
+
+  double getValue() => value;
 }

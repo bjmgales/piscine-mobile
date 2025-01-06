@@ -5,7 +5,7 @@ import 'metrics/wind_speed.dart';
 
 class CurrentWeather {
   final Temperature temperature;
-  final String condition;
+  final List<String> condition;
   final WindSpeed windSpeed;
 
   CurrentWeather(

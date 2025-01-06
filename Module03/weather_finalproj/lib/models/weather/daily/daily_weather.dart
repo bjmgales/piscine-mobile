@@ -1,3 +1,4 @@
+import 'package:weather_proj/utils/formatter.dart';
 
 import '../../../mappers/condition_mapper.dart';
 import '../metrics/temperature.dart';
@@ -12,7 +13,7 @@ class DailyWeather {
       Map<String, dynamic> dailyJson, Map<String, dynamic> dailyUnitsJson) {
     final temperatureUnit = dailyUnitsJson["temperature_2m_min"];
 
-    final dateList = dailyJson["time"];
+    final dateList = formatDate(List<String>.from(dailyJson["time"]));
     final minTemperatureList = dailyJson["temperature_2m_min"];
     final maxTemperatureList = dailyJson["temperature_2m_max"];
     final conditionList = dailyJson['weather_code'];

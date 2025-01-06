@@ -5,7 +5,7 @@ class DayWeather {
   final String date;
   final Temperature minTemperature;
   final Temperature maxTemperature;
-  final String condition;
+  final List<String> condition;
 
   DayWeather(
       {required this.date,

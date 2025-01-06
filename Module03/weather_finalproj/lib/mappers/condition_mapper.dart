@@ -1,36 +1,36 @@
 class ConditionMapper {
-  static const Map<int, String> weatherCodes = {
-    0: 'Clear sky',
-    1: 'Mainly clear',
-    2: 'Partly cloudy',
-    3: 'Overcast',
-    45: 'Fog',
-    48: 'Depositing rime fog',
-    51: 'Drizzle: Light intensity',
-    53: 'Drizzle: Moderate intensity',
-    55: 'Drizzle: Dense intensity',
-    56: 'Freezing Drizzle: Light intensity',
-    57: 'Freezing Drizzle: Dense intensity',
-    61: 'Rain: Slight intensity',
-    63: 'Rain: Moderate intensity',
-    65: 'Rain: Heavy intensity',
-    66: 'Freezing Rain: Light intensity',
-    67: 'Freezing Rain: Heavy intensity',
-    71: 'Snow fall: Slight intensity',
-    73: 'Snow fall: Moderate intensity',
-    75: 'Snow fall: Heavy intensity',
-    77: 'Snow grains',
-    80: 'Rain showers: Slight intensity',
-    81: 'Rain showers: Moderate intensity',
-    82: 'Rain showers: Violent intensity',
-    85: 'Snow showers: Slight intensity',
-    86: 'Snow showers: Heavy intensity',
-    95: 'Thunderstorm: Slight or moderate',
-    96: 'Thunderstorm with slight hail',
-    99: 'Thunderstorm with heavy hail'
+  static const Map<int, List<String>> weatherCodes = {
+    0: ['Clear sky', 'assets/weather_svg/wi-day-sunny.svg'],
+    1: ['Mainly clear', 'assets/weather_svg/wi-day-sunny-overcast.svg'],
+    2: ['Cloudy', 'assets/weather_svg/wi-day-cloudy.svg'],
+    3: ['Overcast', 'assets/weather_svg/wi-cloudy.svg'],
+    45: ['Fog', 'assets/weather_svg/wi-fog.svg'],
+    48: ['Rime fog', 'assets/weather_svg/wi-dust.svg'],
+    51: ['Light drizzle', 'assets/weather_svg/wi-sprinkle.svg'],
+    53: ['Moderate drizzle', 'assets/weather_svg/wi-showers.svg'],
+    55: ['Dense drizzle', 'assets/weather_svg/wi-rain.svg'],
+    56: ['Freezing drizzle', 'assets/weather_svg/wi-rain-mix.svg'],
+    57: ['Freezing drizzle', 'assets/weather_svg/wi-rain-mix.svg'],
+    61: ['Slight rain', 'assets/weather_svg/wi-rain.svg'],
+    63: ['Moderate rain', 'assets/weather_svg/wi-rain.svg'],
+    65: ['Heavy rain', 'assets/weather_svg/wi-rain-wind.svg'],
+    66: ['Freezing rain', 'assets/weather_svg/wi-rain-mix.svg'],
+    67: ['Freezing rain', 'assets/weather_svg/wi-rain-mix.svg'],
+    71: ['Snow fall', 'assets/weather_svg/wi-snow.svg'],
+    73: ['Snow fall', 'assets/weather_svg/wi-snow.svg'],
+    75: ['Heavy snow fall', 'assets/weather_svg/wi-snow-wind.svg'],
+    77: ['Snow grains', 'assets/weather_svg/wi-snowflake-cold.svg'],
+    80: ['Rain showers', 'assets/weather_svg/wi-day-showers.svg'],
+    81: ['Rain showers', 'assets/weather_svg/wi-day-showers.svg'],
+    82: ['Violent rain showers', 'assets/weather_svg/wi-storm-showers.svg'],
+    85: ['Snow showers', 'assets/weather_svg/wi-day-snow.svg'],
+    86: ['Snowstorm', 'assets/weather_svg/wi-snow.svg'],
+    95: ['Thunderstorm', 'assets/weather_svg/wi-thunderstorm.svg'],
+    96: ['Hailstorm', 'assets/weather_svg/wi-thunderstorm.svg'],
+    99: ['Hailstorm', 'assets/weather_svg/wi-thunderstorm.svg']
   };
 
-  static String fromCode(int code) {
+  static List<String> fromCode(int code) {
     var result = weatherCodes[code];
     if (result == null) {
       throw Exception("Cannot map condition with code : $code");

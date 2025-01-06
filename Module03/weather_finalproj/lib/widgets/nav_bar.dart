@@ -16,45 +16,51 @@ class NavBar extends StatelessWidget {
       required this.submittedSearch});
   @override
   Widget build(BuildContext context) {
-    return NavigationBar(
-      indicatorColor: const Color.fromARGB(134, 179, 179, 179),
-      shadowColor: Colors.black,
-      indicatorShape:
-          const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      selectedIndex: currentPageIndex,
-      onDestinationSelected: changePage,
-      destinations: <Widget>[
-        NavigationDestination(
-            icon: SvgPicture.asset(
-              './assets/now.svg',
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-            ),
-            label: 'Currently',
-            tooltip: 'Current Weather'),
-        NavigationDestination(
-            icon: SvgPicture.asset(
-              './assets/day.svg',
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-            ),
-            label: 'Today',
-            tooltip: 'Weather today'),
-        NavigationDestination(
-            icon: SvgPicture.asset(
-              './assets/week.svg',
-              width: 40,
-              height: 40,
-              alignment: Alignment.center,
-            ),
-            label: 'Weekly',
-            tooltip: 'Weather this week')
-      ],
-      height: orientation == Orientation.portrait
-          ? screenHeight * 0.08
-          : screenHeight * 0.2,
+    return NavigationBarTheme(
+      data: NavigationBarThemeData(
+        labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
+          (Set<WidgetState> states) {
+            if (states.contains(WidgetState.selected)) {
+              return TextStyle(color: Colors.orange);
+            }
+            return TextStyle(color: Colors.white);
+          },
+        ),
+        indicatorColor: Colors.transparent,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      child: NavigationBar(
+        // labelBehavior: ,
+        selectedIndex: currentPageIndex,
+        onDestinationSelected: changePage,
+        destinations: <Widget>[
+          NavigationDestination(
+              icon: Icon(Icons.arrow_circle_down_sharp),
+              selectedIcon: Icon(
+                Icons.arrow_circle_down_sharp,
+                color: Colors.orange,
+              ),
+              label: 'Currently',
+              tooltip: 'Current Weather'),
+          NavigationDestination(
+              icon: Icon(Icons.today),
+              selectedIcon: Icon(
+                Icons.today,
+                color: Colors.orange,
+              ),
+              label: 'Today',
+              tooltip: 'Weather today'),
+          NavigationDestination(
+              icon: Icon(Icons.calendar_month),
+              selectedIcon:  Icon(Icons.calendar_month, color: Colors.orange,),
+              label: 'Weekly',
+              tooltip: 'Weather this week')
+        ],
+        height: orientation == Orientation.portrait
+            ? screenHeight * 0.08
+            : screenHeight * 0.2,
+      ),
     );
   }
 }
